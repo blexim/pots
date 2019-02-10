@@ -40,7 +40,7 @@ func Settle(balances []BalanceEntry) []Transfer {
 
   var transfers []Transfer
 
-  for i, ci, di := 5, 0, 0; i > 0 && ci < len(creditors) && di < len(debtors); i-- {
+  for ci, di := 0, 0; ci < len(creditors) && di < len(debtors); {
     c := &creditors[ci]
     d := &debtors[di]
     value := mini(c.balance, -d.balance)
