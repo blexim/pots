@@ -10,8 +10,7 @@ type BalanceEntry struct {
 }
 
 type Transfer struct {
-  from string
-  to string
+  from, to string
   value int
 }
 
