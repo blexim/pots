@@ -19,7 +19,7 @@ func (service PotsService) AddDebit(name string, value int) error {
   return service.storage.AddDebit(name, value)
 }
 
-func (service PotsService) Settle() ([]Transfer, error) {
+func (service PotsService) Settle() ([]LedgerEntry, error) {
   balances, err := service.storage.GetBalances()
 
   if err != nil {

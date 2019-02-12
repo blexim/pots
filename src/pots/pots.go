@@ -4,14 +4,16 @@ import (
   "sort"
 )
 
-type BalanceEntry struct {
-  name string
-  balance int
+type LedgerEntry struct {
+  From string`json:"from"`
+  To string`json:"to"`
+  Value int`json:"value"`
+  Timestamp int64`json:"timestamp"`
 }
 
-type Transfer struct {
-  from, to string
-  value int
+type BalanceEntry struct {
+  Player string`json:"player"`
+  Balance int`json:"balance"`
 }
 
 type byAbsBalance []BalanceEntry
@@ -21,13 +23,13 @@ func mini(i, j int) int { if i < j { return i } else { return j } }
 
 func (a byAbsBalance) Len() int { return len(a) }
 func (a byAbsBalance) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a byAbsBalance) Less(i, j int) bool { return absi(a[i].balance) > absi(a[j].balance) }
+func (a byAbsBalance) Less(i, j int) bool { return absi(a[i].Balance) > absi(a[j].Balance) }
 
-func Settle(balances []BalanceEntry) []Transfer {
+func Settle(balances []BalanceEntry) []LedgerEntry {
   var creditors, debtors []BalanceEntry
 
   for _, entry := range balances {
-    if entry.balance > 0 {
+    if entry.Balance > 0 {
       creditors = append(creditors, entry)
     } else {
       debtors = append(debtors, entry)
@@ -37,22 +39,22 @@ func Settle(balances []BalanceEntry) []Transfer {
   sort.Sort(byAbsBalance(creditors))
   sort.Sort(byAbsBalance(debtors))
 
-  var transfers []Transfer
+  var transfers []LedgerEntry
 
   for ci, di := 0, 0; ci < len(creditors) && di < len(debtors); {
     c := &creditors[ci]
     d := &debtors[di]
-    value := mini(c.balance, -d.balance)
-    transfer := Transfer{ d.name, c.name, value, }
+    value := mini(c.Balance, -d.Balance)
+    transfer := LedgerEntry{ c.Player, d.Player, value, 0, }
     transfers = append(transfers, transfer)
-    c.balance -= value
-    d.balance += value
+    c.Balance -= value
+    d.Balance += value
 
-    if c.balance == 0 {
+    if c.Balance == 0 {
       ci++
     }
 
-    if d.balance == 0 {
+    if d.Balance == 0 {
       di++
     }
   }
