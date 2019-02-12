@@ -1,6 +1,7 @@
 package pots
 
 import (
+  "os"
   "database/sql"
   _ "github.com/go-sql-driver/mysql"
 )
@@ -9,8 +10,16 @@ type SqlStorage struct {
   gameId int64
 }
 
+func getDsn() string {
+  if envName, wasThere := os.LookupEnv("POTS_DSN"); wasThere {
+    return envName
+  } else {
+    return "root:password@tcp(127.0.0.1)/pots"
+  }
+}
+
 func openDb() (*sql.DB, error) {
-  return sql.Open("mysql", "root:password@tcp(127.0.0.1)/pots")
+  return sql.Open("mysql", getDsn())
 }
 
 func NewGame() (SqlStorage, error) {
