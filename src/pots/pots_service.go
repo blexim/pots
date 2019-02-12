@@ -1,22 +1,22 @@
 package pots
 
 type Storage interface {
-  AddCredit(name string, value int) error
-  AddDebit(name string, value int) error
+  Transfer(from string, to string, value int) error
   GetBalances() ([]BalanceEntry, error)
-  EndGame() error
 }
 
 type PotsService struct {
   storage Storage
 }
 
+const POT_ACCOUNT string = "pot"
+
 func (service PotsService) AddCredit(name string, value int) error {
-  return service.storage.AddCredit(name, value)
+  return service.storage.Transfer(POT_ACCOUNT, name, value)
 }
 
 func (service PotsService) AddDebit(name string, value int) error {
-  return service.storage.AddDebit(name, value)
+  return service.storage.Transfer(name, POT_ACCOUNT, value)
 }
 
 func (service PotsService) Settle() ([]LedgerEntry, error) {

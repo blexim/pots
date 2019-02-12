@@ -29,7 +29,7 @@ func Settle(balances []BalanceEntry) []LedgerEntry {
   var creditors, debtors []BalanceEntry
 
   for _, entry := range balances {
-    if entry.Balance > 0 {
+    if entry.Balance < 0 {
       creditors = append(creditors, entry)
     } else {
       debtors = append(debtors, entry)
@@ -44,11 +44,11 @@ func Settle(balances []BalanceEntry) []LedgerEntry {
   for ci, di := 0, 0; ci < len(creditors) && di < len(debtors); {
     c := &creditors[ci]
     d := &debtors[di]
-    value := mini(c.Balance, -d.Balance)
-    transfer := LedgerEntry{ c.Player, d.Player, value, 0, }
+    value := mini(-c.Balance, d.Balance)
+    transfer := LedgerEntry{ d.Player, c.Player, value, 0, }
     transfers = append(transfers, transfer)
-    c.Balance -= value
-    d.Balance += value
+    c.Balance += value
+    d.Balance -= value
 
     if c.Balance == 0 {
       ci++
