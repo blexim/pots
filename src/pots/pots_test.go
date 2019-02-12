@@ -17,7 +17,7 @@ func ExampleSettle1() {
   transfers := Settle(people)
 
   fmt.Println(transfers)
-  // Output: [{bob alice 10}]
+  // Output: [{alice bob 10 0}]
 }
 
 func ExampleSettle2() {
@@ -43,5 +43,5 @@ func ExampleSettle2() {
   transfers := Settle(people)
 
   fmt.Println(transfers)
-  // Output: [{dave alice 8} {bob alice 2} {bob charlie 5}]
+  // Output: [{alice dave 8 0} {alice bob 2 0} {charlie bob 5 0}]
 }

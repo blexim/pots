@@ -11,6 +11,8 @@ import (
 
 type DynamoStorage struct {
   svc *dynamodb.DynamoDB
+  ledgerTable string
+  balanceTable string
 }
 
 func GetDynamo() DynamoStorage {
@@ -18,7 +20,15 @@ func GetDynamo() DynamoStorage {
       Region: aws.String("eu-west-2"),
     }))
 
-  return DynamoStorage{dynamodb.New(sess)}
+  return DynamoStorage{dynamodb.New(sess), "pots-ledger", "pots-balance"}
+}
+
+func GetTestDynamo() DynamoStorage {
+  sess := session.Must(session.NewSession(&aws.Config{
+      Region: aws.String("eu-west-2"),
+    }))
+
+  return DynamoStorage{dynamodb.New(sess), "pots-test-ledger", "pots-test-balance"}
 }
 
 func (s DynamoStorage) Transfer(from string, to string, value int) error {
@@ -47,7 +57,7 @@ func (s DynamoStorage) addLedger(from string, to string, value int) error {
 
 	input := &dynamodb.PutItemInput{
     Item: av,
-    TableName: aws.String("pots-ledger"),
+    TableName: aws.String(s.ledgerTable),
 	}
 
   _, err = s.svc.PutItem(input)
@@ -56,7 +66,7 @@ func (s DynamoStorage) addLedger(from string, to string, value int) error {
 
 func (s DynamoStorage) addBalance(player string, value int) error {
   update := &dynamodb.UpdateItemInput{
-    TableName: aws.String("pots-balance"),
+    TableName: aws.String(s.balanceTable),
     Key: map[string]*dynamodb.AttributeValue{
       "player": {
         S: aws.String(player),
@@ -76,7 +86,7 @@ func (s DynamoStorage) addBalance(player string, value int) error {
 
 func (s DynamoStorage) GetBalances() ([]BalanceEntry, error) {
   scanParams := &dynamodb.ScanInput{
-    TableName: aws.String("pots-balance"),
+    TableName: aws.String(s.balanceTable),
     ProjectionExpression: aws.String("player, balance"),
   }
 

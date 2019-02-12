@@ -5,8 +5,8 @@ import (
 )
 
 func ExampleSettle() {
-  sqlStorage, _ := NewGame()
-  service := PotsService{sqlStorage}
+  storage := GetTestStorage()
+  service := PotsService{storage}
 
   service.AddCredit("alice", 10)
   service.AddCredit("alice", 5)
@@ -16,6 +16,6 @@ func ExampleSettle() {
 
   fmt.Println(transfers)
 
-  // Output: [{bob alice 15}]
+  // Output: [{alice bob 15 0}]
 }
 

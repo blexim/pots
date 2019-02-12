@@ -6,7 +6,7 @@ import (
 )
 
 func TestDynamoCredit(t *testing.T) {
-  s := GetDynamo()
+  s := GetTestDynamo()
 
   if err := s.Transfer("@alice", "@bob", 10); err != nil {
     t.Errorf("Error: %v", err)
@@ -14,9 +14,12 @@ func TestDynamoCredit(t *testing.T) {
 }
 
 func ExampleDynamoBalances() {
-  s := GetDynamo()
+  s := GetTestDynamo()
 
-  fmt.Println(s.GetBalances())
+  balances, err := s.GetBalances()
 
-  // Output: {}
+  if err != nil {
+    fmt.Println(balances)
+  }
 }
+

@@ -26,9 +26,6 @@ func (service PotsService) Settle() ([]LedgerEntry, error) {
     return nil, err
   }
 
-  if err = service.storage.EndGame(); err != nil {
-    return nil, err
-  }
-
   return Settle(balances), nil
 }
+
