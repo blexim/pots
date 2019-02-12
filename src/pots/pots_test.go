@@ -5,12 +5,12 @@ import "fmt"
 func ExampleSettle1() {
   people := []BalanceEntry{
     {
-      name: "alice",
-      balance: 10,
+      Player: "alice",
+      Balance: 10,
     },
     {
-      name: "bob",
-      balance: -10,
+      Player: "bob",
+      Balance: -10,
     },
   }
 
@@ -23,20 +23,20 @@ func ExampleSettle1() {
 func ExampleSettle2() {
   people := []BalanceEntry{
     {
-      name: "alice",
-      balance: 10,
+      Player: "alice",
+      Balance: 10,
     },
     {
-      name: "bob",
-      balance: -7,
+      Player: "bob",
+      Balance: -7,
     },
     {
-      name: "charlie",
-      balance: 5,
+      Player: "charlie",
+      Balance: 5,
     },
     {
-      name: "dave",
-      balance: -8,
+      Player: "dave",
+      Balance: -8,
     },
   }
 

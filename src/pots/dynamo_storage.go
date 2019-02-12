@@ -11,20 +11,35 @@ import (
 )
 
 type DynamoStorage struct {
+  svc *dynamodb.DynamoDB
 }
 
-func GetDb() *dynamodb.DynamoDB {
+func GetDynamo() DynamoStorage {
   sess := session.Must(session.NewSession(&aws.Config{
-      Region: aws.String("eu-west-2")},
-  ))
+      Region: aws.String("eu-west-2"),
+    }))
 
-  // Create DynamoDB client
-  return dynamodb.New(sess)
+  return DynamoStorage{dynamodb.New(sess)}
 }
 
-func (s DynamoStorage) AddCredit(name string, value int) error {
-  svc := GetDb()
-	ledgerEntry := LedgerEntry{name, "pot", value, time.Now().Unix(),}
+func (s DynamoStorage) Transfer(from string, to string, value int) error {
+  if err := s.addLedger(from, to, value); err != nil {
+    return err
+  }
+
+  if err := s.addBalance(from, -value); err != nil {
+    return err
+  }
+
+  if err := s.addBalance(to, value); err != nil {
+    return err
+  }
+
+  return nil
+}
+
+func (s DynamoStorage) addLedger(from string, to string, value int) error {
+	ledgerEntry := LedgerEntry{from, to, value, time.Now().Unix(),}
 	av, err := dynamodbattribute.MarshalMap(ledgerEntry)
 
   if err != nil {
@@ -36,15 +51,16 @@ func (s DynamoStorage) AddCredit(name string, value int) error {
     TableName: aws.String("pots-ledger"),
 	}
 
-  if _, err = svc.PutItem(input); err != nil {
-    return err
-  }
+  _, err = s.svc.PutItem(input)
+  return err
+}
 
+func (s DynamoStorage) addBalance(player string, value int) error {
   update := &dynamodb.UpdateItemInput{
     TableName: aws.String("pots-balance"),
     Key: map[string]*dynamodb.AttributeValue{
       "player": {
-        S: aws.String(name),
+        S: aws.String(player),
       },
     },
     UpdateExpression: aws.String("ADD balance :val"),
@@ -55,8 +71,29 @@ func (s DynamoStorage) AddCredit(name string, value int) error {
     },
   }
 
-  _, err = svc.UpdateItem(update)
-
+  _, err := s.svc.UpdateItem(update)
   return err
+}
+
+func (s DynamoStorage) GetBalances() ([]BalanceEntry, error) {
+  scanParams := &dynamodb.ScanInput{
+    TableName: aws.String("pots-balance"),
+    ProjectionExpression: aws.String("player, balance"),
+  }
+
+  scanOutput, err := s.svc.Scan(scanParams)
+
+  if err != nil {
+    return nil, err
+  }
+
+  ret := []BalanceEntry{}
+  err = dynamodbattribute.UnmarshalListOfMaps(scanOutput.Items, &ret)
+
+  if err != nil {
+    return nil, err
+  }
+
+  return ret, nil
 }
 

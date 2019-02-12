@@ -5,25 +5,18 @@ import (
   "testing"
 )
 
-func TestNewGame(t *testing.T) {
-  sqlStorage, err := NewGame()
+func TestDynamoCredit(t *testing.T) {
+  s := GetDynamo()
 
-  if err != nil || sqlStorage.gameId < 0 {
+  if err := s.Transfer("@alice", "@bob", 10); err != nil {
     t.Errorf("Error: %v", err)
   }
 }
 
-func ExampleGetBalances() {
-  s, _ := NewGame()
+func ExampleDynamoBalances() {
+  s := GetDynamo()
 
-  s.AddCredit("alice", 10)
-  s.AddCredit("alice", 5)
-  s.AddDebit("bob", 15)
+  fmt.Println(s.GetBalances())
 
-  balances, _ := s.GetBalances()
-
-  fmt.Println(balances)
-
-  // Output: [{alice 15} {bob -15}]
+  // Output: {}
 }
-
