@@ -9,6 +9,10 @@ type PotsService struct {
   storage Storage
 }
 
+func GetDynamoPotsService() PotsService {
+  return PotsService{GetDynamo()}
+}
+
 const POT_ACCOUNT string = "pot"
 
 func (service PotsService) AddCredit(name string, value int) error {
@@ -17,6 +21,10 @@ func (service PotsService) AddCredit(name string, value int) error {
 
 func (service PotsService) AddDebit(name string, value int) error {
   return service.storage.Transfer(name, POT_ACCOUNT, value)
+}
+
+func (service PotsService) Transfer(from string, to string, value int) error {
+  return service.storage.Transfer(from, to, value)
 }
 
 func (service PotsService) Settle() ([]LedgerEntry, error) {
