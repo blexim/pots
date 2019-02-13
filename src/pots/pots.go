@@ -5,10 +5,10 @@ import (
 )
 
 type LedgerEntry struct {
-  From string`json:"from"`
-  To string`json:"to"`
-  Value int`json:"value"`
-  Timestamp int64`json:"timestamp"`
+  From string     `json:"from"`
+  To string       `json:"to"`
+  Value int       `json:"value"`
+  Timestamp int64 `json:"timestamp"`
 }
 
 type BalanceEntry struct {

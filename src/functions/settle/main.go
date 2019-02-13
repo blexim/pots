@@ -11,7 +11,7 @@ type SettleRequest struct {
 }
 
 type SettleResponse struct {
-  transfers []pots.LedgerEntry  `json:"transfers"`
+  Transfers []pots.LedgerEntry    `json:"transfers"`
 }
 
 var service pots.PotsService
@@ -24,9 +24,11 @@ func HandleRequest(ctx context.Context) (SettleResponse, error) {
   log.Print("Handling a settle request")
 
   if entries, err := service.Settle(); err != nil {
-    return SettleResponse{entries}, nil
-  } else {
+    log.Printf("Got an error: %v", err)
     return SettleResponse{}, err
+  } else {
+    log.Printf("Found a solution: %v", entries)
+    return SettleResponse{entries}, nil
   }
 }
 
