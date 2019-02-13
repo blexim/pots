@@ -35,4 +35,3 @@ func HandleRequest(ctx context.Context) (SettleResponse, error) {
 func main() {
   lambda.Start(HandleRequest)
 }
-

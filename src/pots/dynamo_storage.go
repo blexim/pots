@@ -1,8 +1,8 @@
 package pots
 
 import (
-	"strconv"
-	"time"
+  "strconv"
+  "time"
   "github.com/aws/aws-sdk-go/aws"
   "github.com/aws/aws-sdk-go/aws/session"
   "github.com/aws/aws-sdk-go/service/dynamodb"
@@ -17,16 +17,16 @@ type DynamoStorage struct {
 
 func GetDynamo() DynamoStorage {
   sess := session.Must(session.NewSession(&aws.Config{
-      Region: aws.String("eu-west-2"),
-    }))
+    Region: aws.String("eu-west-2"),
+  }))
 
   return DynamoStorage{dynamodb.New(sess), "pots-ledger", "pots-balance"}
 }
 
 func GetTestDynamo() DynamoStorage {
   sess := session.Must(session.NewSession(&aws.Config{
-      Region: aws.String("eu-west-2"),
-    }))
+    Region: aws.String("eu-west-2"),
+  }))
 
   return DynamoStorage{dynamodb.New(sess), "pots-test-ledger", "pots-test-balance"}
 }
@@ -48,17 +48,17 @@ func (s DynamoStorage) Transfer(from string, to string, value int) error {
 }
 
 func (s DynamoStorage) addLedger(from string, to string, value int) error {
-	ledgerEntry := LedgerEntry{from, to, value, time.Now().Unix(),}
-	av, err := dynamodbattribute.MarshalMap(ledgerEntry)
+  ledgerEntry := LedgerEntry{from, to, value, time.Now().Unix(),}
+  av, err := dynamodbattribute.MarshalMap(ledgerEntry)
 
   if err != nil {
     return err
   }
 
-	input := &dynamodb.PutItemInput{
+  input := &dynamodb.PutItemInput{
     Item: av,
     TableName: aws.String(s.ledgerTable),
-	}
+  }
 
   _, err = s.svc.PutItem(input)
   return err
@@ -73,10 +73,10 @@ func (s DynamoStorage) addBalance(player string, value int) error {
       },
     },
     UpdateExpression: aws.String("ADD balance :val"),
-		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":val": {
-				N: aws.String(strconv.Itoa(value)),
-			},
+    ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+      ":val": {
+        N: aws.String(strconv.Itoa(value)),
+      },
     },
   }
 
