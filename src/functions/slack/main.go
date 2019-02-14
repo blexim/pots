@@ -3,6 +3,7 @@ package main
 import (
   "context"
   "encoding/json"
+  "fmt"
   "github.com/aws/aws-lambda-go/events"
   "github.com/aws/aws-lambda-go/lambda"
   "github.com/nlopes/slack"
@@ -11,12 +12,18 @@ import (
   "log"
   "net/http"
   "os"
+  "pots"
 )
 
-func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-  log.Printf("Handling a Slack request: %v", req)
-  log.Printf("Body: %v", req.Body)
+var potsService pots.PotsService
+var slackClient *slack.Client
 
+func init() {
+  potsService = pots.GetDynamoPotsService()
+  slackClient = slack.New(os.Getenv("SLACK_BOT_TOKEN"))
+}
+
+func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
   sv, err := slack.NewSecretsVerifier(http.Header(req.MultiValueHeaders), os.Getenv("SLACK_SIGNING_SECRET"))
 
   if err != nil {
@@ -37,8 +44,6 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
     }, nil
   }
 
-  log.Printf("Signature verification succeeded!")
-
   msg, err := slackevents.ParseEvent(json.RawMessage(req.Body), slackevents.OptionNoVerifyToken())
   if err != nil {
     log.Printf("Couldn't parse json from Slack: %v", err)
@@ -49,15 +54,113 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
   }
 
   if msg.InnerEvent.Type == "app_mention" {
-    log.Printf("Parsed mention: %v", msg.InnerEvent.Data.(slackevents.AppMentionEvent))
-  } else {
-    log.Printf("Message type was [%v]", msg.InnerEvent.Type)
+    mention := msg.InnerEvent.Data.(*slackevents.AppMentionEvent)
+    if err = handleMention(mention.User, mention.Channel, mention.Text); err != nil {
+      log.Printf("Error handling mention: %v", err)
+      return events.APIGatewayProxyResponse{
+        StatusCode: http.StatusInternalServerError,
+        Body: "Internal error",
+      }, nil
+    }
   }
 
   return events.APIGatewayProxyResponse{
     StatusCode: http.StatusOK,
     Body: "ok",
   }, nil
+}
+
+func handleMention(user string, channel string, text string) error {
+  log.Printf("Handling mention from [%v] in channel [%v]: [%v]", user, channel, text)
+
+  if buyin := ParseBuyin(user, text); buyin != nil {
+    return handleBuyin(channel, buyin)
+  }
+
+  if cashout := ParseCashout(user, text); cashout != nil {
+    return handleCashout(channel, cashout)
+  }
+
+  if transfer := ParseTransfer(user, text); transfer != nil {
+    return handleTransfer(channel, transfer)
+  }
+
+  if settle := ParseSettle(user, text); settle != nil {
+    return handleSettle(channel)
+  }
+
+  if help := ParseHelp(user, text); help != nil {
+    return handleHelp(channel)
+  }
+
+  return nil
+}
+
+func handleBuyin(channel string, buyin *BuyinCommand) error {
+  if err := potsService.AddCredit(buyin.Player, buyin.Value); err != nil {
+    return err
+  }
+
+  reply := fmt.Sprintf("Confirmed <@%s> bought in for £%.02f", buyin.Player, float32(buyin.Value) / 100)
+  _, _, err := slackClient.PostMessage(channel, slack.MsgOptionText(reply, false))
+  return err
+}
+
+func handleCashout(channel string, cashout *CashoutCommand) error {
+  if err := potsService.AddDebit(cashout.Player, cashout.Value); err != nil {
+    return err
+  }
+
+  reply := fmt.Sprintf("Confirmed <@%s> cashed out for £%.02f", cashout.Player, float32(cashout.Value) / 100)
+  _, _, err := slackClient.PostMessage(channel, slack.MsgOptionText(reply, false))
+  return err
+}
+
+func handleTransfer(channel string, transfer *TransferCommand) error {
+  if err := potsService.Transfer(transfer.From, transfer.To, transfer.Value); err != nil {
+    return err
+  }
+
+  reply := fmt.Sprintf("Confirmed <@%s> paid £%.02f to <@%s>", transfer.From, float32(transfer.Value) / 100,
+    transfer.To)
+  _, _, err := slackClient.PostMessage(channel, slack.MsgOptionText(reply, false))
+  return err
+}
+
+func handleSettle(channel string) error {
+  ledger, err := potsService.Settle()
+
+  if err != nil {
+    return err
+  }
+
+  if len(ledger) == 0 {
+    _, _, err := slackClient.PostMessage(channel, slack.MsgOptionText("Everybody is even!", false))
+    return err
+  }
+
+  for _, debt := range(ledger) {
+    msg := fmt.Sprintf("<@%s> should pay £%.02f to <@%s>", debt.From, float32(debt.Value)/100, debt.To)
+    _, _, err := slackClient.PostMessage(channel, slack.MsgOptionText(msg, false))
+
+    if err != nil {
+      _, _, _ = slackClient.PostMessage(channel, slack.MsgOptionText("Error :(", false))
+      return err
+    }
+  }
+
+  return nil
+}
+
+func handleHelp(channel string) error {
+  _, _, err := slackClient.PostMessage(channel, slack.MsgOptionText(
+    `I understand the following commands:
+@pokerbot in £10
+@pokerbot out £20
+@pokerbot pay @someone £5
+@pokerbot settle
+@pokerbot help`, false))
+  return err
 }
 
 func main() {
