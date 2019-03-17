@@ -101,7 +101,7 @@ func handleBuyin(channel string, buyin *BuyinCommand) error {
     return err
   }
 
-  reply := fmt.Sprintf("Confirmed <@%s> bought in for £%.02f", buyin.Player, float32(buyin.Value) / 100)
+  reply := fmt.Sprintf("Confirmed <@%s> borrowed £%.02f from the bank", buyin.Player, float32(buyin.Value) / 100)
   _, _, err := slackClient.PostMessage(channel, slack.MsgOptionText(reply, false))
   return err
 }
@@ -111,7 +111,7 @@ func handleCashout(channel string, cashout *CashoutCommand) error {
     return err
   }
 
-  reply := fmt.Sprintf("Confirmed <@%s> cashed out for £%.02f", cashout.Player, float32(cashout.Value) / 100)
+  reply := fmt.Sprintf("Confirmed <@%s> deposited £%.02f into the bank", cashout.Player, float32(cashout.Value) / 100)
   _, _, err := slackClient.PostMessage(channel, slack.MsgOptionText(reply, false))
   return err
 }
@@ -155,10 +155,10 @@ func handleSettle(channel string) error {
 func handleHelp(channel string) error {
   _, _, err := slackClient.PostMessage(channel, slack.MsgOptionText(
     `I understand the following commands:
-@pokerbot in £10
-@pokerbot out £20
-@pokerbot pay @someone £5
-@pokerbot settle
+@pokerbot in £10  (use this if you took £10 of chips without paying cash)
+@pokerbot out £20 (use this if you put back £20 of chips without taking any cash)
+@pokerbot pay @someone £5  (use this if you transferred £5 cash to someone)
+@pokerbot settle  (use this to find out who owes what)
 @pokerbot help`, false))
   return err
 }
