@@ -8,17 +8,17 @@ import (
 
 type BuyinCommand struct {
 	Player string
-	Value int
+	Value  int
 }
 
 type CashoutCommand struct {
 	Player string
-	Value int
+	Value  int
 }
 
 type TransferCommand struct {
-	From string
-	To string
+	From  string
+	To    string
 	Value int
 }
 
@@ -28,36 +28,21 @@ type SettleCommand struct {
 type HelpCommand struct {
 }
 
-
 func ParseBuyin(user string, text string) *BuyinCommand {
-	re := regexp.MustCompile(`in £?(\d+)(\.\d+)?`)
+	re := regexp.MustCompile(`in £?(\d+[.]?\d{1,2})?`)
 	m := re.FindStringSubmatch(text)
-
-	if m != nil {
-		pounds, err := strconv.Atoi(m[1])
-
-		if err != nil {
-			log.Printf("Couldn't parse value in buyin command: %v", err);
-			return nil
-		}
-
-		value := pounds * 100
-
-		if len(m) > 1 && len(m[2]) > 0 {
-			pence, err := strconv.Atoi(m[2][1:])
-
-			if err != nil {
-				log.Printf("Couldn't parse value in buyin command: %v", err);
-				return nil
-			}
-
-			value += pence
-		}
-
-		return &BuyinCommand{user, value}
+	if m == nil {
+		return nil
 	}
+	parsed, err := strconv.ParseFloat(m[1], 64)
+	if err != nil {
+		log.Printf("Couldn't parse value in buyin command: %v", err)
+		return nil
+	}
+	// Truncate to 2 d.p.
+	value := int(parsed * 100)
 
-	return nil
+	return &BuyinCommand{user, value}
 }
 
 func ParseCashout(user string, text string) *CashoutCommand {
@@ -68,7 +53,7 @@ func ParseCashout(user string, text string) *CashoutCommand {
 		pounds, err := strconv.Atoi(m[1])
 
 		if err != nil {
-			log.Printf("Couldn't parse value in cashout command: %v", err);
+			log.Printf("Couldn't parse value in cashout command: %v", err)
 			return nil
 		}
 
@@ -78,7 +63,7 @@ func ParseCashout(user string, text string) *CashoutCommand {
 			pence, err := strconv.Atoi(m[2][1:])
 
 			if err != nil {
-				log.Printf("Couldn't parse value in cashout command: %v", err);
+				log.Printf("Couldn't parse value in cashout command: %v", err)
 				return nil
 			}
 
@@ -101,7 +86,7 @@ func ParseTransfer(user string, text string) *TransferCommand {
 		pounds, err := strconv.Atoi(m[2])
 
 		if err != nil {
-			log.Printf("Couldn't parse value in cashout command: %v", err);
+			log.Printf("Couldn't parse value in cashout command: %v", err)
 			return nil
 		}
 
@@ -111,7 +96,7 @@ func ParseTransfer(user string, text string) *TransferCommand {
 			pence, err := strconv.Atoi(m[3][1:])
 
 			if err != nil {
-				log.Printf("Couldn't parse value in cashout command: %v", err);
+				log.Printf("Couldn't parse value in cashout command: %v", err)
 				return nil
 			}
 
