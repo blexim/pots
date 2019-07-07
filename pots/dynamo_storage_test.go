@@ -1,25 +1,24 @@
 package pots
 
 import (
-  "fmt"
-  "testing"
+	"fmt"
+	"testing"
 )
 
 func TestDynamoCredit(t *testing.T) {
-  s := GetTestDynamo()
+	s := GetTestDynamo()
 
-  if err := s.Transfer("@alice", "@bob", 10); err != nil {
-    t.Errorf("Error: %v", err)
-  }
+	if err := s.Transfer("@alice", "@bob", 10); err != nil {
+		t.Errorf("Error: %v", err)
+	}
 }
 
 func ExampleDynamoBalances() {
-  s := GetTestDynamo()
+	s := GetTestDynamo()
 
-  balances, err := s.GetBalances()
+	balances, err := s.GetBalances()
 
-  if err != nil {
-    fmt.Println(balances)
-  }
+	if err != nil {
+		fmt.Println(balances)
+	}
 }
-
